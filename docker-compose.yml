@@ -32,7 +32,8 @@ services:
       retries: 20
 
   php:
-    image: php:8.3-apache
+    build:
+      context: ./backend-php
     container_name: intern-link-php
     restart: unless-stopped
     depends_on:
@@ -44,12 +45,10 @@ services:
       - ./backend-php:/var/www/html
     ports:
       - "8000:80"
-    command: >
-      sh -c "docker-php-ext-install pdo_mysql &&
-      apache2-foreground"
 
   node:
-    image: node:20-alpine
+    build:
+      context: ./backend-node
     container_name: intern-link-node
     restart: unless-stopped
     depends_on:
@@ -62,7 +61,7 @@ services:
       - ./backend-node:/app
     ports:
       - "3000:3000"
-    command: sh -c "npm install && node index.js"
+    command: sh -c "npm install && npm start"
 
   nextjs:
     image: node:20-alpine

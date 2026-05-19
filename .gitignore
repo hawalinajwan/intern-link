@@ -40,8 +40,18 @@ backend/php/storage/uploads/cv/*
 backend-php/uploads/cv/*
 !backend-php/uploads/cv/.gitkeep
 
-# env files (can opt-in for committing if needed)
-.env*
+# env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+backend-php/.env
+backend-node/.env
+!.env.example
+!.env.local.example
+!backend-php/.env.example
+!backend-node/.env.example
 
 # vercel
 .vercel
