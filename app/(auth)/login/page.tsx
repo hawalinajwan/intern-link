@@ -54,7 +54,11 @@ export default function LoginPage() {
         throw new Error(response.data.error || 'Login gagal.');
       }
 
-      setAuth(data.token, data.user_id, data.role);
+      setAuth(data.token, data.user_id, data.role, {
+        name: data.nama || email,
+        email,
+        profile: data.nama ? { nama: data.nama } : { email },
+      });
       router.push(data.role === 'hrd' ? '/hrd/dashboard' : '/mahasiswa/dashboard');
     } catch (error: unknown) {
       const message =

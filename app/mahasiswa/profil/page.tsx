@@ -4,7 +4,7 @@ import axios from 'axios';
 import { ChangeEvent, DragEvent, FormEvent, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
-import { getRole, isLoggedIn } from '@/lib/auth';
+import { getRole, isLoggedIn, setStoredProfile } from '@/lib/auth';
 
 type Profile = {
   user_id: number;
@@ -95,6 +95,7 @@ export default function MahasiswaProfilPage() {
           cv_original_name: profile.cv_original_name,
           cv_uploaded_at: profile.cv_uploaded_at,
         });
+        setStoredProfile(profile);
         setShowUploadZone(!profile.cv_filename);
       } catch (error) {
         if (!axios.isAxiosError(error) || error.response?.status !== 401) {
@@ -134,6 +135,17 @@ export default function MahasiswaProfilPage() {
         semester: semesterNumber,
         bio,
         skills: parseSkills(skills),
+      });
+      setStoredProfile({
+        nama,
+        universitas,
+        jurusan,
+        semester: semesterNumber,
+        bio,
+        skills: parseSkills(skills),
+        cv_filename: cv.cv_filename,
+        cv_original_name: cv.cv_original_name,
+        cv_uploaded_at: cv.cv_uploaded_at,
       });
       setToast('Profil berhasil disimpan.');
     } catch (error) {

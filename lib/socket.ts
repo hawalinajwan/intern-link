@@ -1,26 +1,26 @@
 import { io, type Socket } from 'socket.io-client';
 
-export type AuthenticatedSocketUser = {
-  userId: number;
-  role: 'mahasiswa' | 'hrd';
-  name: string;
-};
+export const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3000';
 
-export function createChatSocket(): Socket {
-  return io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3000', {
-    autoConnect: false,
-    transports: ['websocket'],
-    withCredentials: true,
-  });
+let socketInstance: Socket | null = null;
+
+export function getSocket(): Socket {
+  if (!socketInstance) {
+    socketInstance = io(SOCKET_URL, {
+      autoConnect: false,
+      transports: ['websocket'],
+      withCredentials: true,
+    });
+  }
+
+  if (!socketInstance.connected) {
+    socketInstance.connect();
+  }
+
+  return socketInstance;
 }
 
-export function connectSocket(user: AuthenticatedSocketUser): Socket {
-  const socket = createChatSocket();
-
-  socket.once('connect', () => {
-    socket.emit('authenticate', user);
-  });
-
-  socket.connect();
-  return socket;
+export function disconnectSocket(): void {
+  if (!socketInstance) return;
+  socketInstance.disconnect();
 }

@@ -6,7 +6,7 @@ require_once __DIR__ . '/../middleware/AuthMiddleware.php';
 
 final class LamaranController
 {
-    private const STATUS_WHITELIST = ['ditinjau', 'dipanggil', 'diterima', 'ditolak'];
+    private const STATUS_WHITELIST = ['pending', 'ditinjau', 'dipanggil', 'diterima', 'ditolak'];
 
     public function __construct(private readonly PDO $db)
     {
@@ -131,8 +131,13 @@ final class LamaranController
             return;
         }
 
+        if (!$this->isAllowedTransition((string) $lamaran['status'], $status)) {
+            $this->json(['success' => false, 'error' => 'Transisi status tidak diizinkan.'], 422);
+            return;
+        }
+
         $chatRoomId = $lamaran['chat_room_id'];
-        if ($status === 'dipanggil') {
+        if ($status === 'dipanggil' && $lamaran['status'] !== 'dipanggil') {
             $chatRoomId = $chatRoomId ?: 'room_' . $lamaranId . '_' . time();
         }
 
@@ -146,7 +151,7 @@ final class LamaranController
             $lamaranId,
         ]);
 
-        if ($status === 'dipanggil') {
+        if ($status === 'dipanggil' && $lamaran['status'] !== 'dipanggil') {
             $this->createChatRoom([
                 'roomId' => $chatRoomId,
                 'lamaranId' => $lamaranId,
@@ -209,6 +214,23 @@ final class LamaranController
         $lamaran = $statement->fetch();
 
         return $lamaran ?: null;
+    }
+
+    private function isAllowedTransition(string $currentStatus, string $nextStatus): bool
+    {
+        if ($currentStatus === $nextStatus) {
+            return true;
+        }
+
+        $allowedTransitions = [
+            'pending' => ['ditinjau', 'dipanggil', 'ditolak'],
+            'ditinjau' => ['dipanggil', 'ditolak'],
+            'dipanggil' => ['diterima', 'ditolak'],
+            'diterima' => [],
+            'ditolak' => [],
+        ];
+
+        return in_array($nextStatus, $allowedTransitions[$currentStatus] ?? [], true);
     }
 
     private function createChatRoom(array $payload): void

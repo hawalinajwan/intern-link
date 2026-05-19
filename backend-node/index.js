@@ -2,7 +2,7 @@ const express = require('express');
 const http = require('http');
 const cors = require('cors');
 const { Server } = require('socket.io');
-const roomsRouter = require('./routes/rooms');
+const { createRoomsRouter } = require('./routes/rooms');
 const { initSocket } = require('./socket/handlers');
 const { connectMongoDB } = require('./config/mongodb');
 
@@ -27,8 +27,8 @@ async function bootstrap() {
     res.json({ status: 'ok' });
   });
 
-  app.use('/api/rooms', roomsRouter);
   initSocket(io);
+  app.use('/api/rooms', createRoomsRouter(io));
 
   app.use((error, _req, res, _next) => {
     console.error(error);

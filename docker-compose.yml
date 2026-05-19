@@ -2,6 +2,7 @@ services:
   mysql:
     image: mysql:8.4
     container_name: intern-link-mysql
+    restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: magang_db
@@ -9,16 +10,17 @@ services:
       - "3306:3306"
     volumes:
       - mysql-data:/var/lib/mysql
-      - ./database/mysql/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./backend-php/config/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
       interval: 5s
       timeout: 5s
       retries: 20
 
-  mongo:
+  mongodb:
     image: mongo:7
-    container_name: intern-link-mongo
+    container_name: intern-link-mongodb
+    restart: unless-stopped
     ports:
       - "27017:27017"
     volumes:
@@ -28,6 +30,56 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
+
+  php:
+    image: php:8.3-apache
+    container_name: intern-link-php
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    env_file:
+      - ./backend-php/.env.example
+    volumes:
+      - ./backend-php:/var/www/html
+    ports:
+      - "8000:80"
+    command: >
+      sh -c "docker-php-ext-install pdo_mysql &&
+      apache2-foreground"
+
+  node:
+    image: node:20-alpine
+    container_name: intern-link-node
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    env_file:
+      - ./backend-node/.env.example
+    working_dir: /app
+    volumes:
+      - ./backend-node:/app
+    ports:
+      - "3000:3000"
+    command: sh -c "npm install && node index.js"
+
+  nextjs:
+    image: node:20-alpine
+    container_name: intern-link-nextjs
+    restart: unless-stopped
+    depends_on:
+      - php
+      - node
+    working_dir: /app
+    volumes:
+      - ./:/app
+    ports:
+      - "3001:3001"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXT_PUBLIC_SOCKET_URL: http://localhost:3000
+    command: sh -c "npm install && npm run dev -- --hostname 0.0.0.0 --port 3001"
 
 volumes:
   mysql-data:

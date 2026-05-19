@@ -194,6 +194,7 @@ final class LowonganController
                     SUM(CASE WHEN la.status = 'dipanggil' THEN 1 ELSE 0 END) AS dipanggil_count,
                     SUM(CASE WHEN la.status = 'diterima' THEN 1 ELSE 0 END) AS diterima_count,
                     SUM(CASE WHEN la.status = 'ditolak' THEN 1 ELSE 0 END) AS ditolak_count,
+                    SUM(CASE WHEN DATE(la.created_at) = CURDATE() THEN 1 ELSE 0 END) AS today_lamaran_count,
                     COUNT(la.id) AS total_lamaran
              FROM lowongan l
              LEFT JOIN lamaran la ON la.lowongan_id = l.id
@@ -287,6 +288,7 @@ final class LowonganController
                 'dipanggil' => (int) $row['dipanggil_count'],
                 'diterima' => (int) $row['diterima_count'],
                 'ditolak' => (int) $row['ditolak_count'],
+                'today' => (int) $row['today_lamaran_count'],
                 'total' => (int) $row['total_lamaran'],
             ],
         ];

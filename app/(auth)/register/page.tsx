@@ -77,7 +77,11 @@ export default function RegisterPage() {
         throw new Error(response.data.error || 'Registrasi gagal.');
       }
 
-      setAuth(data.token, data.user_id, data.role);
+      setAuth(data.token, data.user_id, data.role, {
+        name: email,
+        email,
+        profile: { email },
+      });
       router.push(data.role === 'hrd' ? '/hrd/dashboard' : '/mahasiswa/dashboard');
     } catch (error: unknown) {
       const message =
