@@ -19,6 +19,7 @@ const eslintConfig = defineConfig([
     "uploads/**",
     ".run-logs/**",
     ".runtime/**",
+    "scripts/e2e-mvp.js",
   ]),
 ]);
 

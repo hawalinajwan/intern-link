@@ -1,0 +1,7 @@
+.git
+.next
+.run-logs
+.runtime
+node_modules
+backend-node/node_modules
+npm-debug.log

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { KeyboardEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Socket } from 'socket.io-client';
 import api from '@/lib/api';
-import { SOCKET_URL, getSocket } from '@/lib/socket';
+import { getSocket, getSocketUrl } from '@/lib/socket';
 import { getRole, isLoggedIn } from '@/lib/auth';
 import { ChatBubble } from '@/components/ChatBubble';
 import type { ChatMessage } from '@/types/chat';
@@ -113,7 +113,7 @@ export function ChatRoom({ roomId, role }: ChatRoomProps) {
       setErrorMessage('');
 
       try {
-        const response = await axios.get<RoomMetaResponse>(`${SOCKET_URL}/api/rooms/${roomId}`);
+        const response = await axios.get<RoomMetaResponse>(`${getSocketUrl()}/api/rooms/${roomId}`);
         const room = response.data.data;
         setLamaranId(room.lamaranId);
         setLowonganTitle(room.lowonganTitle || '');

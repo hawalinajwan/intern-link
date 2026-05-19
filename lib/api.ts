@@ -2,8 +2,14 @@ import axios from 'axios';
 import { clearAuth, getToken } from './auth';
 import { showToast } from './toast';
 
+const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
+
+if (!apiBaseUrl) {
+  throw new Error('NEXT_PUBLIC_API_URL is required.');
+}
+
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
+  baseURL: apiBaseUrl,
   headers: {
     Accept: 'application/json',
   },

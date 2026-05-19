@@ -6,7 +6,7 @@ const { createRoomsRouter } = require('./routes/rooms');
 const { initSocket } = require('./socket/handlers');
 const { connectMongoDB } = require('./config/mongodb');
 
-const PORT = 3000;
+const PORT = Number(process.env.PORT || 3000);
 
 async function bootstrap() {
   await connectMongoDB();

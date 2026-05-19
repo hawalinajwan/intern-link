@@ -8,7 +8,6 @@ final class CVController
 {
     private const MAX_SIZE = 5 * 1024 * 1024;
     private const PDF_MIME = 'application/pdf';
-    private const UPLOAD_DIR = __DIR__ . '/../uploads/cv/';
 
     public function __construct(private readonly PDO $db)
     {
@@ -208,6 +207,55 @@ final class CVController
         $this->json(['success' => true]);
     }
 
+    public function companyProfile(): void
+    {
+        $user = (new AuthMiddleware($this->db))->requireAuth('hrd');
+        $statement = $this->db->prepare(
+            'SELECT user_id, nama_perusahaan, industri, website, logo_url
+             FROM profil_perusahaan
+             WHERE user_id = ?
+             LIMIT 1'
+        );
+        $statement->execute([$user['id']]);
+        $profile = $statement->fetch();
+
+        if (!$profile) {
+            $this->json(['success' => false, 'error' => 'Profil perusahaan tidak ditemukan.'], 404);
+            return;
+        }
+
+        $profile['user_id'] = (int) $profile['user_id'];
+        $this->json(['success' => true, 'data' => $profile]);
+    }
+
+    public function updateCompanyProfile(): void
+    {
+        $user = (new AuthMiddleware($this->db))->requireAuth('hrd');
+        $payload = $this->jsonBody();
+        $fields = [];
+        $values = [];
+
+        foreach (['nama_perusahaan', 'industri', 'website', 'logo_url'] as $field) {
+            if (array_key_exists($field, $payload)) {
+                $fields[] = "{$field} = ?";
+                $values[] = $this->nullableString($payload[$field]);
+            }
+        }
+
+        if ($fields === []) {
+            $this->json(['success' => false, 'error' => 'Tidak ada field yang diubah.'], 422);
+            return;
+        }
+
+        $values[] = $user['id'];
+        $statement = $this->db->prepare(
+            'UPDATE profil_perusahaan SET ' . implode(', ', $fields) . ' WHERE user_id = ?'
+        );
+        $statement->execute($values);
+
+        $this->json(['success' => true]);
+    }
+
     private function detectMime(string $path): string
     {
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
@@ -223,13 +271,23 @@ final class CVController
 
     private function uploadDir(): string
     {
-        $dir = realpath(self::UPLOAD_DIR);
+        $configured = getenv('UPLOAD_DIR');
+        $path = is_string($configured) && trim($configured) !== ''
+            ? trim($configured)
+            : (__DIR__ . '/../uploads/cv');
+
+        if (!$this->isAbsolutePath($path)) {
+            $this->json(['success' => false, 'error' => 'UPLOAD_DIR harus berupa path absolut.'], 500);
+            exit;
+        }
+
+        $dir = realpath($path);
         if ($dir === false) {
-            if (!mkdir(self::UPLOAD_DIR, 0755, true) && !is_dir(self::UPLOAD_DIR)) {
+            if (!mkdir($path, 0755, true) && !is_dir($path)) {
                 $this->json(['success' => false, 'error' => 'Direktori upload tidak tersedia.'], 500);
                 exit;
             }
-            $dir = realpath(self::UPLOAD_DIR);
+            $dir = realpath($path);
         }
 
         if ($dir === false || !is_writable($dir)) {
@@ -238,6 +296,11 @@ final class CVController
         }
 
         return rtrim($dir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+    }
+
+    private function isAbsolutePath(string $path): bool
+    {
+        return preg_match('/^(?:[A-Za-z]:\\\\|\/)/', $path) === 1;
     }
 
     private function cleanOriginalName(string $name): string

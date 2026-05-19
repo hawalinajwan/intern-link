@@ -54,6 +54,16 @@ try {
         return;
     }
 
+    if ($method === 'GET' && $path === '/hrd/profil') {
+        $cvController->companyProfile();
+        return;
+    }
+
+    if ($method === 'PUT' && $path === '/hrd/profil') {
+        $cvController->updateCompanyProfile();
+        return;
+    }
+
     if ($method === 'GET' && $path === '/lowongan') {
         $lowonganController->index($_GET);
         return;
@@ -108,6 +118,7 @@ try {
     header('Content-Type: application/json');
     echo json_encode(['message' => 'Endpoint tidak ditemukan.'], JSON_UNESCAPED_SLASHES);
 } catch (Throwable $error) {
+    error_log((string) $error);
     http_response_code(500);
     header('Content-Type: application/json');
     echo json_encode(['message' => 'Terjadi kesalahan server.'], JSON_UNESCAPED_SLASHES);
