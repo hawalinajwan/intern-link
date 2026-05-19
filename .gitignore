@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+**/node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -29,6 +30,15 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+.run-logs/
+.runtime/
+
+# local backend runtime data
+backend/php/storage/app.json
+backend/php/storage/uploads/cv/*
+!backend/php/storage/uploads/cv/.gitkeep
+backend-php/uploads/cv/*
+!backend-php/uploads/cv/.gitkeep
 
 # env files (can opt-in for committing if needed)
 .env*

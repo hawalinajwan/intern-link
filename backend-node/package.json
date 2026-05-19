@@ -1,0 +1,17 @@
+{
+  "name": "intern-link-backend-node",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "dev": "node --watch index.js",
+    "start": "node index.js",
+    "check": "node --check index.js && node --check config/mongodb.js && node --check models/ChatRoom.js && node --check models/ChatMessage.js && node --check routes/rooms.js && node --check socket/handlers.js && node --check src/server.js && node --check src/config/mongo.js && node --check src/models/ChatRoom.js && node --check src/models/ChatMessage.js && node --check src/routes/rooms.js && node --check src/socket/handlers.js && node --check src/store/memoryStore.js && node --check src/store/mongoStore.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.3",
+    "mongoose": "^8.2.1",
+    "socket.io": "^4.7.5"
+  }
+}
