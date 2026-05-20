@@ -72,9 +72,10 @@ export default function HRDDashboardPage() {
 
   return (
     <section className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:py-10">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+      <div className="rounded-lg border border-rose-100 bg-white/85 p-5 shadow-sm shadow-rose-950/5 sm:p-6">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-sm font-medium text-slate-500">Dashboard HRD</p>
+          <p className="text-sm font-semibold text-rose-600">Dashboard HRD</p>
           <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-950">Ringkasan Rekrutmen</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
             Pantau lowongan aktif, laju pelamar hari ini, dan kandidat yang sedang menunggu proses interview.
@@ -82,15 +83,16 @@ export default function HRDDashboardPage() {
         </div>
         <Link
           href="/hrd/lowongan"
-          className="inline-flex items-center justify-center rounded-md bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+          className="inline-flex items-center justify-center rounded-md bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-rose-600/20 transition hover:bg-rose-500"
         >
           Kelola Lowongan
         </Link>
+        </div>
       </div>
 
       <div className="mt-6 grid gap-4 md:grid-cols-3">
-        <DashboardStat label="Lowongan aktif" value={String(totalActive)} tone="default" />
-        <DashboardStat label="Pelamar hari ini" value={String(totalTodayApplicants)} tone="default" />
+        <DashboardStat label="Lowongan aktif" value={String(totalActive)} tone="rose" />
+        <DashboardStat label="Pelamar hari ini" value={String(totalTodayApplicants)} tone="blue" />
         <DashboardStat label="Dipanggil pending" value={String(dipanggilPending)} tone={dipanggilPending > 0 ? 'highlight' : 'default'} />
       </div>
 
@@ -207,16 +209,19 @@ function DashboardStat({
 }: {
   label: string;
   value: string;
-  tone: 'default' | 'highlight';
+  tone: 'default' | 'highlight' | 'rose' | 'blue';
 }) {
+  const toneClass =
+    tone === 'highlight'
+      ? 'border-amber-200 bg-amber-50'
+      : tone === 'rose'
+        ? 'border-rose-200 bg-rose-50'
+        : tone === 'blue'
+          ? 'border-sky-200 bg-sky-50'
+          : 'border-slate-200 bg-white';
+
   return (
-    <div
-      className={`rounded-lg border p-4 shadow-sm ${
-        tone === 'highlight'
-          ? 'border-amber-200 bg-amber-50'
-          : 'border-slate-200 bg-white'
-      }`}
-    >
+    <div className={`rounded-lg border p-4 shadow-sm ${toneClass}`}>
       <p className={`text-sm font-medium ${tone === 'highlight' ? 'text-amber-700' : 'text-slate-500'}`}>{label}</p>
       <p className={`mt-3 text-3xl font-semibold tracking-tight ${tone === 'highlight' ? 'text-amber-900' : 'text-slate-950'}`}>{value}</p>
     </div>

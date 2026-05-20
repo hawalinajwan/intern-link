@@ -10,6 +10,32 @@ type CVModalProps = {
   onClose: () => void;
 };
 
+async function readCvErrorMessage(requestError: unknown) {
+  if (!axios.isAxiosError(requestError)) return 'Gagal memuat CV.';
+
+  const status = requestError.response?.status;
+  const data = requestError.response?.data;
+
+  if (data instanceof Blob) {
+    const text = await data.text();
+
+    try {
+      const parsed = JSON.parse(text) as { error?: string; message?: string };
+      if (parsed.error || parsed.message) return parsed.error || parsed.message || 'Gagal memuat CV.';
+    } catch {
+      if (text.trim()) return text.trim();
+    }
+  }
+
+  if (typeof data?.error === 'string') return data.error;
+  if (typeof data?.message === 'string') return data.message;
+  if (status === 401) return 'Sesi HRD berakhir. Silakan login ulang.';
+  if (status === 403) return 'Akses CV ditolak. Kandidat harus melamar ke lowongan perusahaanmu.';
+  if (status === 404) return 'CV belum tersedia atau file tidak ditemukan.';
+
+  return 'Gagal memuat CV.';
+}
+
 export function CVModal({ mahasiswaUserId, isOpen, onClose }: CVModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -28,20 +54,29 @@ export function CVModal({ mahasiswaUserId, isOpen, onClose }: CVModalProps) {
       try {
         const response = await api.get(`/hrd/cv/${mahasiswaUserId}`, {
           responseType: 'blob',
-          headers: { 'X-Skip-NotFound-Redirect': '1' },
+          headers: {
+            'X-Skip-Forbidden-Redirect': '1',
+            'X-Skip-NotFound-Redirect': '1',
+          },
         });
 
         if (isCancelled) return;
+
+        if (response.data.type && response.data.type !== 'application/pdf') {
+          throw new Error(await response.data.text());
+        }
 
         objectUrl = URL.createObjectURL(response.data);
         setUrl(objectUrl);
       } catch (requestError) {
         if (isCancelled) return;
 
-        const backendMessage = axios.isAxiosError(requestError)
-          ? requestError.response?.data?.message || requestError.response?.data?.error
-          : null;
-        setError(typeof backendMessage === 'string' ? backendMessage : 'Gagal memuat CV.');
+        if (requestError instanceof Error && !axios.isAxiosError(requestError)) {
+          setError(requestError.message || 'Gagal memuat CV.');
+          return;
+        }
+
+        setError(await readCvErrorMessage(requestError));
       } finally {
         if (!isCancelled) {
           setIsLoading(false);

@@ -79,7 +79,7 @@ export function AuthNav() {
         className={`sticky top-0 z-40 transition ${
           isPublicHome
             ? 'border-b border-white/10 bg-slate-950/35 text-white backdrop-blur'
-            : 'border-b border-slate-200 bg-white/90 backdrop-blur'
+            : 'border-b border-rose-100 bg-white/92 shadow-sm shadow-rose-950/5 backdrop-blur'
         }`}
       >
         <div className="mx-auto flex min-h-16 w-full max-w-6xl flex-col gap-3 px-4 py-3 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:py-0">
@@ -115,10 +115,10 @@ export function AuthNav() {
                       href={item.href}
                       className={`rounded-md px-3 py-2 text-sm font-medium transition ${
                         active
-                          ? 'bg-slate-950 text-white'
+                          ? 'bg-rose-600 text-white shadow-sm shadow-rose-600/20'
                           : isPublicHome
                             ? 'text-white/90 hover:bg-white/10'
-                            : 'text-slate-700 hover:bg-slate-100'
+                            : 'text-slate-700 hover:bg-rose-50 hover:text-rose-700'
                       }`}
                     >
                       {item.label}
@@ -140,7 +140,7 @@ export function AuthNav() {
                     className={`rounded-md px-3 py-2 text-sm font-medium transition ${
                       isPublicHome
                         ? 'bg-rose-500 text-white hover:bg-rose-400'
-                        : 'bg-slate-950 text-white hover:bg-slate-800'
+                        : 'bg-rose-600 text-white shadow-sm shadow-rose-600/20 hover:bg-rose-500'
                     }`}
                   >
                     Register
@@ -153,7 +153,7 @@ export function AuthNav() {
               <div className="flex flex-wrap items-center gap-3">
                 <div
                   className={`flex items-center gap-3 rounded-lg px-3 py-2 ${
-                    isPublicHome ? 'border border-white/10 bg-white/10' : 'border border-slate-200 bg-slate-50'
+                    isPublicHome ? 'border border-white/10 bg-white/10' : 'border border-rose-100 bg-rose-50/70'
                   }`}
                 >
                   <div className="min-w-0">
@@ -164,7 +164,7 @@ export function AuthNav() {
                   </div>
                   <span
                     className={`rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${
-                      isPublicHome ? 'bg-white/10 text-white ring-1 ring-white/15' : 'bg-white text-slate-700 ring-1 ring-slate-200'
+                    isPublicHome ? 'bg-white/10 text-white ring-1 ring-white/15' : 'bg-white text-rose-700 ring-1 ring-rose-200'
                     }`}
                   >
                     {role}
@@ -179,7 +179,7 @@ export function AuthNav() {
                   className={`rounded-md border px-3 py-2 text-sm font-medium transition ${
                     isPublicHome
                       ? 'border-white/15 text-white hover:bg-white/10'
-                      : 'border-slate-300 text-slate-700 hover:bg-slate-100'
+                      : 'border-rose-200 text-slate-700 hover:bg-rose-50 hover:text-rose-700'
                   }`}
                 >
                   Logout

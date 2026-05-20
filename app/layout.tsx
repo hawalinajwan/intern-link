@@ -23,9 +23,11 @@ export default function RootLayout({
       lang="id"
       className={`${inter.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-slate-50 text-slate-950">
+      <body className="min-h-full bg-[#fff8f1] text-slate-950">
         <AuthNav />
-        <main className="min-h-[calc(100vh-4rem)]">{children}</main>
+        <main className="min-h-[calc(100vh-4rem)] bg-[linear-gradient(180deg,#fff8f1_0%,#f8fafc_44%,#ffffff_100%)]">
+          {children}
+        </main>
       </body>
     </html>
   );

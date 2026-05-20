@@ -73,9 +73,10 @@ export default function MahasiswaDashboardPage() {
 
   return (
     <section className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:py-10">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div className="rounded-lg border border-rose-100 bg-white/85 p-5 shadow-sm shadow-rose-950/5 sm:p-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-medium text-slate-500">Ringkasan mahasiswa</p>
+          <p className="text-sm font-semibold text-rose-600">Ringkasan mahasiswa</p>
           <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-950">Dashboard Mahasiswa</h1>
           <p className="mt-2 text-sm leading-6 text-slate-600">
             Lihat progres aplikasi terbaru dan lanjutkan ke lowongan berikutnya.
@@ -83,17 +84,18 @@ export default function MahasiswaDashboardPage() {
         </div>
         <Link
           href="/mahasiswa/lowongan"
-          className="inline-flex rounded-md bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800"
+          className="inline-flex rounded-md bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-rose-600/20 hover:bg-rose-500"
         >
           Cari Lowongan
         </Link>
+        </div>
       </div>
 
       {error ? <p className="mt-6 rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p> : null}
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Total lamaran" value={totalLamaran} />
-        <StatCard label="Pending / Ditinjau" value={pendingDitinjauCount} />
+        <StatCard label="Total lamaran" value={totalLamaran} tone="rose" />
+        <StatCard label="Pending / Ditinjau" value={pendingDitinjauCount} tone="blue" />
         <StatCard label="Dipanggil" value={dipanggilCount} highlight={dipanggilCount > 0} />
         <StatCard label="Diterima" value={diterimaCount} success />
       </div>
@@ -133,16 +135,22 @@ function StatCard({
   value,
   highlight = false,
   success = false,
+  tone = 'default',
 }: {
   label: string;
   value: number;
   highlight?: boolean;
   success?: boolean;
+  tone?: 'default' | 'rose' | 'blue';
 }) {
   const classes = highlight
     ? 'border-yellow-200 bg-yellow-50'
     : success
       ? 'border-green-200 bg-green-50'
+      : tone === 'rose'
+        ? 'border-rose-200 bg-rose-50'
+        : tone === 'blue'
+          ? 'border-sky-200 bg-sky-50'
       : 'border-slate-200 bg-white';
 
   return (

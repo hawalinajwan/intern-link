@@ -1,7 +1,6 @@
 'use client';
 
 import { FormEvent, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { setAuth } from '@/lib/auth';
 
@@ -25,7 +24,6 @@ type AuthResponse = {
 };
 
 export default function RegisterPage() {
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<Role>('mahasiswa');
@@ -82,7 +80,7 @@ export default function RegisterPage() {
         email,
         profile: { email },
       });
-      router.push(data.role === 'hrd' ? '/hrd/dashboard' : '/mahasiswa/dashboard');
+      window.location.assign(data.role === 'hrd' ? '/hrd/dashboard' : '/mahasiswa/dashboard');
     } catch (error: unknown) {
       const message =
         typeof error === 'object' &&
@@ -150,8 +148,8 @@ export default function RegisterPage() {
               {roleOptions.map((option) => (
                 <label
                   key={option.value}
-                  className={`cursor-pointer rounded-md border p-3 transition ${
-                    role === option.value ? 'border-slate-950 bg-slate-50' : 'border-slate-200 hover:bg-slate-50'
+                    className={`cursor-pointer rounded-md border p-3 transition ${
+                    role === option.value ? 'border-rose-500 bg-rose-50 text-rose-950' : 'border-slate-200 hover:bg-rose-50'
                   }`}
                 >
                   <input
@@ -173,7 +171,7 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-md bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+            className="w-full rounded-md bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-rose-600/20 transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:bg-slate-400"
           >
             {isSubmitting ? 'Mendaftarkan...' : 'Daftar'}
           </button>

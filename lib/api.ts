@@ -27,6 +27,7 @@ api.interceptors.response.use(
     const status = error.response?.status;
     const requestMethod = String(error.config?.method || 'get').toLowerCase();
     const skipNotFoundRedirect = error.config?.headers?.['X-Skip-NotFound-Redirect'] === '1';
+    const skipForbiddenRedirect = error.config?.headers?.['X-Skip-Forbidden-Redirect'] === '1';
 
     if (error.response?.status === 401) {
       clearAuth();
@@ -40,7 +41,12 @@ api.interceptors.response.use(
       showToast('Jaringan bermasalah. Periksa koneksi lalu coba lagi.');
     }
 
-    if (status === 403 && typeof window !== 'undefined' && window.location.pathname !== '/akses-ditolak') {
+    if (
+      status === 403 &&
+      !skipForbiddenRedirect &&
+      typeof window !== 'undefined' &&
+      window.location.pathname !== '/akses-ditolak'
+    ) {
       window.location.href = '/akses-ditolak';
     }
 

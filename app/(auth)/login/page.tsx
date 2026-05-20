@@ -2,7 +2,6 @@
 
 import { FormEvent, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { setAuth } from '@/lib/auth';
 
@@ -20,7 +19,6 @@ type AuthResponse = {
 };
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({});
@@ -59,7 +57,7 @@ export default function LoginPage() {
         email,
         profile: data.nama ? { nama: data.nama } : { email },
       });
-      router.push(data.role === 'hrd' ? '/hrd/dashboard' : '/mahasiswa/dashboard');
+      window.location.assign(data.role === 'hrd' ? '/hrd/dashboard' : '/mahasiswa/dashboard');
     } catch (error: unknown) {
       const message =
         typeof error === 'object' &&
@@ -124,7 +122,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-md bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+            className="w-full rounded-md bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-rose-600/20 transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:bg-slate-400"
           >
             {isSubmitting ? 'Masuk...' : 'Login'}
           </button>
