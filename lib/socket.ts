@@ -1,13 +1,7 @@
 import { io, type Socket } from 'socket.io-client';
 
 function getRequiredSocketUrl(): string {
-  const value = process.env.NEXT_PUBLIC_SOCKET_URL;
-
-  if (!value) {
-    throw new Error('NEXT_PUBLIC_SOCKET_URL is required.');
-  }
-
-  return value;
+  return process.env.NEXT_PUBLIC_SOCKET_URL || 'https://intern-link-node.hawali.site';
 }
 
 export function getSocketUrl(): string {
@@ -20,8 +14,16 @@ export function getSocket(): Socket {
   if (!socketInstance) {
     socketInstance = io(getRequiredSocketUrl(), {
       autoConnect: false,
-      transports: ['websocket'],
+      transports: ['websocket', 'polling'],
       withCredentials: true,
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+    });
+
+    socketInstance.on('connect_error', () => {
+      if (!socketInstance) return;
+      socketInstance.io.opts.transports = ['polling', 'websocket'];
     });
   }
 

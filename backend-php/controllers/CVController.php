@@ -300,7 +300,7 @@ final class CVController
 
     private function isAbsolutePath(string $path): bool
     {
-        return preg_match('/^(?:[A-Za-z]:\\\\|\/)/', $path) === 1;
+        return preg_match('/^(?:[A-Za-z]:(?:\\\\|\/)|\/)/', $path) === 1;
     }
 
     private function cleanOriginalName(string $name): string

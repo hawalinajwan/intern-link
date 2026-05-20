@@ -13,11 +13,8 @@ function corsAllowedOrigin(?string $origin): ?string
         return null;
     }
 
-    if (in_array($origin, [
-        'http://localhost:3001',
-        'http://127.0.0.1:3001',
-        'https://intern-link.hawali.site',
-    ], true)) {
+    $clientUrl = getenv('CLIENT_URL');
+    if (is_string($clientUrl) && $clientUrl !== '' && $origin === $clientUrl) {
         return $origin;
     }
 
@@ -41,6 +38,6 @@ header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Content-Type: application/json');
 
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'OPTIONS') {
-    http_response_code(204);
+    http_response_code(200);
     exit;
 }

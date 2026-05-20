@@ -12,7 +12,7 @@ const chatMessageSchema = new mongoose.Schema(
     isRead: { type: Boolean, default: false, index: true },
     timestamp: { type: Date, default: Date.now, index: true },
   },
-  { versionKey: false }
+  { versionKey: false, timestamps: true }
 );
 
 chatMessageSchema.index({ roomId: 1, timestamp: -1 });

@@ -46,11 +46,20 @@ function bearerToken(): ?string
         $header = $headers['Authorization'] ?? $headers['authorization'] ?? null;
     }
 
-    if (!is_string($header) || !preg_match('/^Bearer\s+(.+)$/i', trim($header), $matches)) {
+    if (!is_string($header)) {
         return null;
     }
 
-    return trim($matches[1]);
+    $header = trim($header);
+    if ($header === '') {
+        return null;
+    }
+
+    if (preg_match('/^Bearer\s+(.+)$/i', $header, $matches)) {
+        return trim($matches[1]);
+    }
+
+    return $header;
 }
 
 function authUnauthorized(): never

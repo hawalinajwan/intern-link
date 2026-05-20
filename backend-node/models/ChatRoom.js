@@ -13,7 +13,7 @@ const chatRoomSchema = new mongoose.Schema(
     messageCount: { type: Number, default: 0 },
     activeParticipants: { type: [Number], default: [] },
   },
-  { versionKey: false }
+  { versionKey: false, timestamps: true }
 );
 
 module.exports = mongoose.models.ChatRoom || mongoose.model('ChatRoom', chatRoomSchema);

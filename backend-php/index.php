@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+require_once __DIR__ . '/config/load-env.php';
 require_once __DIR__ . '/config/cors.php';
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/controllers/AuthController.php';
@@ -21,6 +22,12 @@ try {
 
     if ($method === 'POST' && $path === '/auth/register') {
         $authController->register();
+        return;
+    }
+
+    if ($method === 'GET' && $path === '/health') {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => true, 'data' => ['status' => 'ok']], JSON_UNESCAPED_SLASHES);
         return;
     }
 
@@ -116,10 +123,10 @@ try {
 
     http_response_code(404);
     header('Content-Type: application/json');
-    echo json_encode(['message' => 'Endpoint tidak ditemukan.'], JSON_UNESCAPED_SLASHES);
+    echo json_encode(['success' => false, 'error' => 'Endpoint tidak ditemukan.'], JSON_UNESCAPED_SLASHES);
 } catch (Throwable $error) {
     error_log((string) $error);
     http_response_code(500);
     header('Content-Type: application/json');
-    echo json_encode(['message' => 'Terjadi kesalahan server.'], JSON_UNESCAPED_SLASHES);
+    echo json_encode(['success' => false, 'error' => 'Terjadi kesalahan server.'], JSON_UNESCAPED_SLASHES);
 }

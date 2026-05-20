@@ -30,9 +30,15 @@ final class LowonganController
                 LEFT JOIN profil_perusahaan p ON p.user_id = l.perusahaan_user_id
                 {$where}
                 ORDER BY l.created_at DESC, l.id DESC
-                LIMIT {$limit} OFFSET {$offset}";
+                LIMIT ? OFFSET ?";
         $statement = $this->db->prepare($sql);
-        $statement->execute($params);
+        $bindIndex = 1;
+        foreach ($params as $value) {
+            $statement->bindValue($bindIndex++, $value);
+        }
+        $statement->bindValue($bindIndex++, $limit, PDO::PARAM_INT);
+        $statement->bindValue($bindIndex, $offset, PDO::PARAM_INT);
+        $statement->execute();
 
         $this->json([
             'data' => array_map([$this, 'publicRow'], $statement->fetchAll()),

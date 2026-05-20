@@ -276,7 +276,12 @@ final class LamaranController
 
     private function chatServerUrl(): string
     {
-        return rtrim(getenv('CHAT_SERVER_URL') ?: 'http://localhost:3000', '/');
+        $url = getenv('NODE_URL') ?: getenv('CHAT_SERVER_URL') ?: '';
+        if (!is_string($url) || trim($url) === '') {
+            throw new RuntimeException('NODE_URL is required.');
+        }
+
+        return rtrim($url, '/');
     }
 
     private function mineRow(array $row): array
