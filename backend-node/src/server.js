@@ -9,7 +9,10 @@ const { createMemoryStore } = require('./store/memoryStore');
 const { createMongoStore } = require('./store/mongoStore');
 
 const port = Number(process.env.PORT || 3000);
-const frontendOrigin = process.env.CLIENT_URL || process.env.FRONTEND_ORIGIN || 'https://intern-link.hawali.site';
+const frontendOrigin = (process.env.CLIENT_URL || process.env.FRONTEND_ORIGIN || 'https://intern-link.hawali.site')
+  .split(',')
+  .map((value) => value.trim())
+  .filter(Boolean);
 
 async function bootstrap() {
   const mongoConnected = await connectMongo();

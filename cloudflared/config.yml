@@ -2,9 +2,6 @@ tunnel: 1bdf7f60-2e9a-43b6-8c19-d257876e1cc0
 credentials-file: C:\Users\muham\.cloudflared\1bdf7f60-2e9a-43b6-8c19-d257876e1cc0.json
 
 ingress:
-  - hostname: intern-link.hawali.site
-    service: http://localhost:3001
-
   - hostname: intern-link-php.hawali.site
     service: http://localhost:8000
 

@@ -13,9 +13,10 @@ function corsAllowedOrigin(?string $origin): ?string
         return null;
     }
 
-    $clientUrl = getenv('CLIENT_URL');
-    if (is_string($clientUrl) && $clientUrl !== '' && $origin === $clientUrl) {
-        return $origin;
+    foreach (corsConfiguredOrigins() as $allowedOrigin) {
+        if ($origin === $allowedOrigin) {
+            return $origin;
+        }
     }
 
     if (str_ends_with($host, '.hawali.site')) {
@@ -23,6 +24,17 @@ function corsAllowedOrigin(?string $origin): ?string
     }
 
     return null;
+}
+
+function corsConfiguredOrigins(): array
+{
+    $value = getenv('CLIENT_URL');
+    if (!is_string($value) || trim($value) === '') {
+        return [];
+    }
+
+    $origins = array_map('trim', explode(',', $value));
+    return array_values(array_filter($origins, static fn (string $origin): bool => $origin !== ''));
 }
 
 $origin = $_SERVER['HTTP_ORIGIN'] ?? null;

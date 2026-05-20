@@ -12,11 +12,23 @@ loadEnv();
 const PORT = Number(process.env.PORT || 3000);
 const HOST = '0.0.0.0';
 
+function configuredOrigins() {
+  const raw = process.env.CLIENT_URL || '';
+  return raw
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
+}
+
 function isAllowedOrigin(origin) {
   if (!origin) return true;
 
   try {
     const { hostname } = new URL(origin);
+    if (configuredOrigins().includes(origin)) {
+      return true;
+    }
+
     return hostname === 'intern-link.hawali.site' || hostname.endsWith('.hawali.site');
   } catch {
     return false;
