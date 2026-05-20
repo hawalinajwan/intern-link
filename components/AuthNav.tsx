@@ -71,18 +71,33 @@ export function AuthNav() {
     return [];
   }, [role]);
 
+  const isPublicHome = pathname === '/' && !loggedIn;
+
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/90 backdrop-blur">
-        <div className="mx-auto flex min-h-16 w-full max-w-7xl flex-col gap-3 px-4 py-3 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:py-0">
+      <header
+        className={`sticky top-0 z-40 transition ${
+          isPublicHome
+            ? 'border-b border-white/10 bg-slate-950/35 text-white backdrop-blur'
+            : 'border-b border-slate-200 bg-white/90 backdrop-blur'
+        }`}
+      >
+        <div className="mx-auto flex min-h-16 w-full max-w-6xl flex-col gap-3 px-4 py-3 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:py-0">
           <div className="flex items-center justify-between gap-4">
-            <Link href="/" className="text-lg font-semibold tracking-tight text-slate-950">
+            <Link
+              href="/"
+              className={`text-lg font-semibold tracking-tight ${isPublicHome ? 'text-white' : 'text-slate-950'}`}
+            >
               intern-link
             </Link>
 
             {loggedIn ? (
               <div className="flex items-center gap-2 lg:hidden">
-                <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold capitalize text-slate-700">
+                <span
+                  className={`rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${
+                    isPublicHome ? 'bg-white/10 text-white' : 'bg-slate-100 text-slate-700'
+                  }`}
+                >
                   {role}
                 </span>
               </div>
@@ -99,7 +114,11 @@ export function AuthNav() {
                       key={item.href}
                       href={item.href}
                       className={`rounded-md px-3 py-2 text-sm font-medium transition ${
-                        active ? 'bg-slate-950 text-white' : 'text-slate-700 hover:bg-slate-100'
+                        active
+                          ? 'bg-slate-950 text-white'
+                          : isPublicHome
+                            ? 'text-white/90 hover:bg-white/10'
+                            : 'text-slate-700 hover:bg-slate-100'
                       }`}
                     >
                       {item.label}
@@ -110,13 +129,19 @@ export function AuthNav() {
                 <>
                   <Link
                     href="/auth/login"
-                    className="rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                    className={`rounded-md px-3 py-2 text-sm font-medium transition ${
+                      isPublicHome ? 'text-white/90 hover:bg-white/10' : 'text-slate-700 hover:bg-slate-100'
+                    }`}
                   >
                     Login
                   </Link>
                   <Link
                     href="/auth/register"
-                    className="rounded-md bg-slate-950 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800"
+                    className={`rounded-md px-3 py-2 text-sm font-medium transition ${
+                      isPublicHome
+                        ? 'bg-rose-500 text-white hover:bg-rose-400'
+                        : 'bg-slate-950 text-white hover:bg-slate-800'
+                    }`}
                   >
                     Register
                   </Link>
@@ -126,12 +151,22 @@ export function AuthNav() {
 
             {loggedIn ? (
               <div className="flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                <div
+                  className={`flex items-center gap-3 rounded-lg px-3 py-2 ${
+                    isPublicHome ? 'border border-white/10 bg-white/10' : 'border border-slate-200 bg-slate-50'
+                  }`}
+                >
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-slate-950">{name || 'Pengguna'}</p>
-                    <p className="text-xs text-slate-500">Akun aktif</p>
+                    <p className={`truncate text-sm font-semibold ${isPublicHome ? 'text-white' : 'text-slate-950'}`}>
+                      {name || 'Pengguna'}
+                    </p>
+                    <p className={`text-xs ${isPublicHome ? 'text-white/70' : 'text-slate-500'}`}>Akun aktif</p>
                   </div>
-                  <span className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold capitalize text-slate-700 ring-1 ring-slate-200">
+                  <span
+                    className={`rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${
+                      isPublicHome ? 'bg-white/10 text-white ring-1 ring-white/15' : 'bg-white text-slate-700 ring-1 ring-slate-200'
+                    }`}
+                  >
                     {role}
                   </span>
                 </div>
@@ -141,7 +176,11 @@ export function AuthNav() {
                     clearAuth();
                     window.location.href = '/auth/login';
                   }}
-                  className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                  className={`rounded-md border px-3 py-2 text-sm font-medium transition ${
+                    isPublicHome
+                      ? 'border-white/15 text-white hover:bg-white/10'
+                      : 'border-slate-300 text-slate-700 hover:bg-slate-100'
+                  }`}
                 >
                   Logout
                 </button>
