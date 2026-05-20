@@ -4,10 +4,6 @@ import { showToast } from './toast';
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
 
-if (!apiBaseUrl) {
-  throw new Error('NEXT_PUBLIC_API_URL is required.');
-}
-
 const api = axios.create({
   baseURL: apiBaseUrl,
   headers: {
@@ -16,6 +12,10 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
+  if (!apiBaseUrl) {
+    return Promise.reject(new Error('NEXT_PUBLIC_API_URL is required.'));
+  }
+
   const token = getToken();
 
   if (token) {
