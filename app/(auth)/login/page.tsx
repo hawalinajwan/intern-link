@@ -117,6 +117,9 @@ export default function LoginPage() {
               autoComplete="current-password"
             />
             {fieldErrors.password ? <p className="mt-1 text-sm text-red-600">{fieldErrors.password}</p> : null}
+            <Link href="/auth/forgot-password" className="mt-2 inline-flex text-sm font-medium text-rose-600 hover:underline">
+              Lupa Password?
+            </Link>
           </div>
 
           <button

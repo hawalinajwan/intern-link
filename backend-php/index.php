@@ -36,6 +36,16 @@ try {
         return;
     }
 
+    if ($method === 'POST' && $path === '/auth/forgot-password') {
+        $authController->forgotPassword();
+        return;
+    }
+
+    if ($method === 'POST' && $path === '/auth/reset-password') {
+        $authController->resetPassword();
+        return;
+    }
+
     if ($method === 'POST' && $path === '/mahasiswa/cv/upload') {
         $cvController->upload();
         return;

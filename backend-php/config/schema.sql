@@ -23,6 +23,9 @@ CREATE TABLE IF NOT EXISTS profil_mahasiswa (
     ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+ALTER TABLE users ADD COLUMN reset_token VARCHAR(64) NULL;
+ALTER TABLE users ADD COLUMN reset_token_expires_at TIMESTAMP NULL;
+
 CREATE TABLE IF NOT EXISTS profil_perusahaan (
   user_id INT PRIMARY KEY,
   nama_perusahaan VARCHAR(255),

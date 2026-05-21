@@ -33,6 +33,16 @@ type LowonganResponse = {
   };
 };
 
+type ProfileResponse = {
+  success: boolean;
+  data: {
+    nama: string | null;
+    universitas: string | null;
+    jurusan: string | null;
+    semester: number | null;
+  };
+};
+
 const JENIS_OPTIONS: Array<{ value: WorkType; label: string }> = [
   { value: 'remote', label: 'Remote' },
   { value: 'onsite', label: 'Onsite' },
@@ -61,6 +71,8 @@ export default function MahasiswaLowonganPage() {
   const [motivation, setMotivation] = useState('');
   const [modalError, setModalError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCheckingProfile, setIsCheckingProfile] = useState(false);
+  const [profileAlertFields, setProfileAlertFields] = useState<string[]>([]);
   const [appliedIds, setAppliedIds] = useState<Set<number>>(new Set());
   const [toast, setToast] = useState('');
 
@@ -134,10 +146,28 @@ export default function MahasiswaLowonganPage() {
     );
   }
 
-  function openApplyModal(lowongan: Lowongan) {
-    setSelectedLowongan(lowongan);
-    setMotivation('');
+  async function openApplyModal(lowongan: Lowongan) {
+    setIsCheckingProfile(true);
     setModalError('');
+
+    try {
+      const response = await api.get<ProfileResponse>('/mahasiswa/profil');
+      const missingFields = getMissingProfileFields(response.data.data);
+
+      if (missingFields.length > 0) {
+        setProfileAlertFields(missingFields);
+        return;
+      }
+
+      setSelectedLowongan(lowongan);
+      setMotivation('');
+    } catch (error) {
+      if (!axios.isAxiosError(error) || error.response?.status !== 401) {
+        setProfileAlertFields(['Profil']);
+      }
+    } finally {
+      setIsCheckingProfile(false);
+    }
   }
 
   function closeApplyModal() {
@@ -255,6 +285,7 @@ export default function MahasiswaLowonganPage() {
                   key={item.id}
                   item={item}
                   hasApplied={appliedIds.has(item.id)}
+                  isCheckingProfile={isCheckingProfile}
                   onApply={() => openApplyModal(item)}
                 />
               ))}
@@ -297,6 +328,13 @@ export default function MahasiswaLowonganPage() {
         />
       ) : null}
 
+      {profileAlertFields.length > 0 ? (
+        <ProfileIncompleteModal
+          missingFields={profileAlertFields}
+          onClose={() => setProfileAlertFields([])}
+        />
+      ) : null}
+
       {toast ? (
         <div className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 rounded-md bg-slate-950 px-4 py-3 text-sm font-medium text-white shadow-lg">
           {toast}
@@ -309,10 +347,12 @@ export default function MahasiswaLowonganPage() {
 function LowonganCard({
   item,
   hasApplied,
+  isCheckingProfile,
   onApply,
 }: {
   item: Lowongan;
   hasApplied: boolean;
+  isCheckingProfile: boolean;
   onApply: () => void;
 }) {
   const companyName = item.perusahaan?.nama_perusahaan || 'Perusahaan';
@@ -356,13 +396,49 @@ function LowonganCard({
         <button
           type="button"
           onClick={onApply}
-          disabled={hasApplied}
+          disabled={hasApplied || isCheckingProfile}
           className="w-full rounded-md bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
         >
-          {hasApplied ? 'Sudah Lamar' : 'Lamar'}
+          {hasApplied ? 'Sudah Lamar' : isCheckingProfile ? 'Cek Profil...' : 'Lamar'}
         </button>
       </div>
     </article>
+  );
+}
+
+function ProfileIncompleteModal({
+  missingFields,
+  onClose,
+}: {
+  missingFields: string[];
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/40 p-4 sm:items-center">
+      <div className="w-full max-w-md rounded-lg bg-white p-5 shadow-xl">
+        <p className="text-sm font-semibold text-rose-600">Profil Belum Lengkap</p>
+        <h2 className="mt-1 text-xl font-semibold text-slate-950">Lengkapi profil sebelum melamar</h2>
+        <p className="mt-3 text-sm leading-6 text-slate-600">
+          Lengkapi data berikut sebelum melamar: {missingFields.join(', ')}.
+        </p>
+
+        <div className="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-md border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            Nanti
+          </button>
+          <a
+            href="/mahasiswa/profil"
+            className="rounded-md bg-rose-600 px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-rose-500"
+          >
+            Lengkapi Profil Sekarang
+          </a>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -486,4 +562,14 @@ function formatIDR(value: number | null) {
 function formatDuration(value: number | null) {
   if (!value) return 'Durasi fleksibel';
   return `${value} bulan`;
+}
+
+function getMissingProfileFields(profile: ProfileResponse['data']): string[] {
+  const missingFields = [];
+  if (!profile.nama?.trim()) missingFields.push('Nama');
+  if (!profile.universitas?.trim()) missingFields.push('Universitas');
+  if (!profile.jurusan?.trim()) missingFields.push('Jurusan');
+  if (!profile.semester) missingFields.push('Semester');
+
+  return missingFields;
 }

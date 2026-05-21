@@ -63,6 +63,14 @@ export default function MahasiswaProfilPage() {
   const [toast, setToast] = useState('');
 
   const hasCv = Boolean(cv.cv_filename && !showUploadZone);
+  const completionItems = [
+    { label: 'Nama', complete: Boolean(nama.trim()) },
+    { label: 'Universitas', complete: Boolean(universitas.trim()) },
+    { label: 'Jurusan', complete: Boolean(jurusan.trim()) },
+    { label: 'Semester', complete: Boolean(semester) },
+  ];
+  const completedCount = completionItems.filter((item) => item.complete).length;
+  const completionPercentage = completedCount * 25;
 
   useEffect(() => {
     if (!isLoggedIn() || getRole() !== 'mahasiswa') {
@@ -256,6 +264,39 @@ export default function MahasiswaProfilPage() {
         <p className="mt-2 text-sm leading-6 text-slate-600">
           Data ini membantu HRD memahami latar belakang akademik, skill, dan dokumen CV kamu.
         </p>
+      </div>
+
+      <div className={`mb-6 rounded-lg border p-5 shadow-sm ${completionPercentage === 100 ? 'border-green-200 bg-green-50' : 'border-rose-100 bg-white'}`}>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className={`text-sm font-semibold ${completionPercentage === 100 ? 'text-green-700' : 'text-rose-600'}`}>
+              Profil {completionPercentage}% lengkap
+            </p>
+            <h2 className="mt-1 text-lg font-semibold text-slate-950">
+              {completionPercentage === 100
+                ? 'Profil lengkap! Kamu bisa melamar lowongan.'
+                : 'Lengkapi untuk bisa melamar'}
+            </h2>
+          </div>
+          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${hasCv ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>
+            CV {hasCv ? 'sudah upload' : 'bonus belum upload'}
+          </span>
+        </div>
+
+        <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100">
+          <div className="h-full rounded-full bg-rose-600 transition-all" style={{ width: `${completionPercentage}%` }} />
+        </div>
+
+        <div className="mt-4 grid gap-2 sm:grid-cols-4">
+          {completionItems.map((item) => (
+            <div key={item.label} className="flex items-center gap-2 rounded-md bg-white/70 px-3 py-2 text-sm text-slate-700">
+              <span className={`flex h-5 w-5 items-center justify-center rounded-full text-xs font-bold ${item.complete ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-400'}`}>
+                {item.complete ? '✓' : '-'}
+              </span>
+              {item.label}
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">

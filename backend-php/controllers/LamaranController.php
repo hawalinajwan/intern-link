@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../middleware/AuthMiddleware.php';
+require_once __DIR__ . '/../helpers/EmailHelper.php';
 
 final class LamaranController
 {
@@ -27,6 +28,16 @@ final class LamaranController
         $lowongan = $this->findOpenLowongan($lowonganId);
         if (!$lowongan) {
             $this->json(['success' => false, 'error' => 'Lowongan tidak ditemukan atau sudah ditutup.'], 404);
+            return;
+        }
+
+        $missingFields = $this->missingProfileFields((int) $user['id']);
+        if ($missingFields !== []) {
+            $this->json([
+                'success' => false,
+                'error' => 'Lengkapi profil sebelum melamar',
+                'missing_fields' => $missingFields,
+            ], 422);
             return;
         }
 
@@ -165,6 +176,10 @@ final class LamaranController
             $this->closeChatRoom((string) $chatRoomId);
         }
 
+        if ($status !== $lamaran['status']) {
+            $this->sendStatusNotification($lamaranId, $status, $chatRoomId ? (string) $chatRoomId : null);
+        }
+
         $this->json([
             'success' => true,
             'data' => [
@@ -172,6 +187,97 @@ final class LamaranController
                 'chat_room_id' => $chatRoomId,
             ],
         ]);
+    }
+
+    private function missingProfileFields(int $mahasiswaUserId): array
+    {
+        $statement = $this->db->prepare(
+            'SELECT nama, universitas, jurusan, semester
+             FROM profil_mahasiswa
+             WHERE user_id = ?
+             LIMIT 1'
+        );
+        $statement->execute([$mahasiswaUserId]);
+        $profile = $statement->fetch() ?: [];
+
+        $missingFields = [];
+        if (empty($profile['nama'])) {
+            $missingFields[] = 'Nama';
+        }
+        if (empty($profile['universitas'])) {
+            $missingFields[] = 'Universitas';
+        }
+        if (empty($profile['jurusan'])) {
+            $missingFields[] = 'Jurusan';
+        }
+        if (empty($profile['semester'])) {
+            $missingFields[] = 'Semester';
+        }
+
+        return $missingFields;
+    }
+
+    private function sendStatusNotification(int $lamaranId, string $newStatus, ?string $chatRoomId): void
+    {
+        if (!in_array($newStatus, ['dipanggil', 'diterima', 'ditolak'], true)) {
+            return;
+        }
+
+        $detail = $this->notificationDetail($lamaranId);
+        if ($detail === null) {
+            return;
+        }
+
+        $email = (string) $detail['mahasiswa_email'];
+        $name = (string) ($detail['mahasiswa_nama'] ?: 'Kandidat');
+        $title = (string) $detail['judul_lowongan'];
+        $company = (string) ($detail['nama_perusahaan'] ?: 'Perusahaan');
+
+        if ($newStatus === 'dipanggil' && $chatRoomId !== null) {
+            EmailHelper::sendDipanggil($email, $name, $title, $company, $this->clientUrl() . '/mahasiswa/chat/' . rawurlencode($chatRoomId));
+            return;
+        }
+
+        if ($newStatus === 'diterima') {
+            EmailHelper::sendDiterima($email, $name, $title, $company);
+            return;
+        }
+
+        EmailHelper::sendDitolak($email, $name, $title, $company);
+    }
+
+    private function notificationDetail(int $lamaranId): ?array
+    {
+        $statement = $this->db->prepare(
+            'SELECT u.email AS mahasiswa_email,
+                    pm.nama AS mahasiswa_nama,
+                    l.judul AS judul_lowongan,
+                    pp.nama_perusahaan
+             FROM lamaran la
+             JOIN users u ON la.mahasiswa_user_id = u.id
+             LEFT JOIN profil_mahasiswa pm ON u.id = pm.user_id
+             JOIN lowongan l ON la.lowongan_id = l.id
+             LEFT JOIN profil_perusahaan pp ON l.perusahaan_user_id = pp.user_id
+             WHERE la.id = ?
+             LIMIT 1'
+        );
+        $statement->execute([$lamaranId]);
+        $detail = $statement->fetch();
+
+        return $detail ?: null;
+    }
+
+    private function clientUrl(): string
+    {
+        $configured = getenv('CLIENT_URL');
+        if (is_string($configured) && trim($configured) !== '') {
+            $first = trim(explode(',', $configured)[0]);
+            if ($first !== '') {
+                return rtrim($first, '/');
+            }
+        }
+
+        return 'https://intern-link.hawali.site';
     }
 
     private function findOpenLowongan(int $lowonganId): ?array
