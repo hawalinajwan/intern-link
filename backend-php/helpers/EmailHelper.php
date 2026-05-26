@@ -92,15 +92,100 @@ final class EmailHelper
     private static function send(string $toEmail, string $toName, string $subject, string $body, string $logPrefix): void
     {
         try {
-            $mail = createMailer();
-            $mail->addAddress($toEmail, $toName ?: 'User');
-            $mail->isHTML(true);
-            $mail->Subject = $subject;
-            $mail->Body = $body;
-            $mail->send();
+            self::sendViaSmtp($toEmail, $toName ?: 'User', $subject, $body);
         } catch (Throwable $error) {
-            error_log($logPrefix . ': ' . $error->getMessage());
+            try {
+                self::sendViaResendApi($toEmail, $toName ?: 'User', $subject, $body);
+            } catch (Throwable $fallbackError) {
+                error_log($logPrefix . ': SMTP failed: ' . $error->getMessage() . ' | Resend API failed: ' . $fallbackError->getMessage());
+            }
         }
+    }
+
+    private static function sendViaSmtp(string $toEmail, string $toName, string $subject, string $body): void
+    {
+        $mail = createMailer();
+        $mail->addAddress($toEmail, $toName);
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body = $body;
+        $mail->send();
+    }
+
+    private static function sendViaResendApi(string $toEmail, string $toName, string $subject, string $body): void
+    {
+        $apiKey = getenv('RESEND_API_KEY') ?: getenv('MAIL_PASSWORD') ?: '';
+        if (!is_string($apiKey) || trim($apiKey) === '') {
+            throw new RuntimeException('RESEND_API_KEY or MAIL_PASSWORD is required.');
+        }
+
+        $payload = json_encode([
+            'from' => self::fromAddress(),
+            'to' => [$toEmail],
+            'subject' => $subject,
+            'html' => $body,
+        ], JSON_UNESCAPED_SLASHES);
+
+        if ($payload === false) {
+            throw new RuntimeException('Failed to encode Resend payload.');
+        }
+
+        if (function_exists('curl_init')) {
+            $curl = curl_init('https://api.resend.com/emails');
+            curl_setopt($curl, CURLOPT_POST, true);
+            curl_setopt($curl, CURLOPT_HTTPHEADER, [
+                'Authorization: Bearer ' . $apiKey,
+                'Content-Type: application/json',
+            ]);
+            curl_setopt($curl, CURLOPT_POSTFIELDS, $payload);
+            curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($curl, CURLOPT_TIMEOUT, (int) (getenv('RESEND_TIMEOUT') ?: getenv('MAIL_TIMEOUT') ?: 10));
+
+            $response = curl_exec($curl);
+            $status = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
+            $error = curl_error($curl);
+            curl_close($curl);
+
+            if ($response === false || $status < 200 || $status >= 300) {
+                throw new RuntimeException('HTTP ' . $status . ' ' . ($error ?: (string) $response));
+            }
+
+            return;
+        }
+
+        $context = stream_context_create([
+            'http' => [
+                'method' => 'POST',
+                'header' => "Authorization: Bearer {$apiKey}\r\nContent-Type: application/json\r\n",
+                'content' => $payload,
+                'timeout' => (int) (getenv('RESEND_TIMEOUT') ?: getenv('MAIL_TIMEOUT') ?: 10),
+                'ignore_errors' => true,
+            ],
+        ]);
+        $response = @file_get_contents('https://api.resend.com/emails', false, $context);
+        $status = self::responseStatus($http_response_header ?? []);
+
+        if ($response === false || $status < 200 || $status >= 300) {
+            throw new RuntimeException('HTTP ' . $status . ' ' . (string) $response);
+        }
+    }
+
+    private static function fromAddress(): string
+    {
+        $address = getenv('MAIL_FROM_ADDRESS') ?: 'noreply@intern-link.hawali.site';
+        $name = getenv('MAIL_FROM_NAME') ?: 'intern-link';
+
+        return trim($name) . ' <' . trim($address) . '>';
+    }
+
+    private static function responseStatus(array $headers): int
+    {
+        $statusLine = $headers[0] ?? '';
+        if (preg_match('/\s(\d{3})\s/', $statusLine, $matches) === 1) {
+            return (int) $matches[1];
+        }
+
+        return 0;
     }
 
     private static function layout(string $brandColor, string $heading, string $content): string
