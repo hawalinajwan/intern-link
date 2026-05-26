@@ -12,8 +12,8 @@ final class EmailHelper
         string $judulLowongan,
         string $perusahaan,
         string $chatUrl
-    ): void {
-        self::send(
+    ): bool {
+        return self::send(
             $toEmail,
             $toName,
             "Kamu Dipanggil Interview - {$judulLowongan}",
@@ -30,10 +30,10 @@ final class EmailHelper
         );
     }
 
-    public static function sendDiterima(string $toEmail, string $toName, string $judulLowongan, string $perusahaan): void
+    public static function sendDiterima(string $toEmail, string $toName, string $judulLowongan, string $perusahaan): bool
     {
         $lamaranUrl = self::clientUrl() . '/mahasiswa/lamaran';
-        self::send(
+        return self::send(
             $toEmail,
             $toName,
             "Selamat! Kamu Diterima - {$judulLowongan}",
@@ -49,10 +49,10 @@ final class EmailHelper
         );
     }
 
-    public static function sendDitolak(string $toEmail, string $toName, string $judulLowongan, string $perusahaan): void
+    public static function sendDitolak(string $toEmail, string $toName, string $judulLowongan, string $perusahaan): bool
     {
         $lowonganUrl = self::clientUrl() . '/mahasiswa/lowongan';
-        self::send(
+        return self::send(
             $toEmail,
             $toName,
             "Update Lamaran - {$judulLowongan}",
@@ -68,10 +68,10 @@ final class EmailHelper
         );
     }
 
-    public static function sendResetPassword(string $toEmail, string $toName, string $resetToken): void
+    public static function sendResetPassword(string $toEmail, string $toName, string $resetToken): bool
     {
         $resetUrl = self::clientUrl() . '/auth/reset-password?token=' . rawurlencode($resetToken);
-        self::send(
+        return self::send(
             $toEmail,
             $toName ?: 'User',
             'Reset Password - intern-link',
@@ -89,17 +89,42 @@ final class EmailHelper
         );
     }
 
-    private static function send(string $toEmail, string $toName, string $subject, string $body, string $logPrefix): void
+    private static function send(string $toEmail, string $toName, string $subject, string $body, string $logPrefix): bool
     {
+        if (!self::hasMailCredential()) {
+            error_log($logPrefix . ': MAIL_PASSWORD or RESEND_API_KEY is required.');
+            return false;
+        }
+
         try {
-            self::sendViaSmtp($toEmail, $toName ?: 'User', $subject, $body);
+            self::sendViaResendApi($toEmail, $toName ?: 'User', $subject, $body);
+            return true;
         } catch (Throwable $error) {
+            if (self::isCredentialFailure($error)) {
+                error_log($logPrefix . ': Resend API failed: ' . $error->getMessage());
+                return false;
+            }
+
             try {
-                self::sendViaResendApi($toEmail, $toName ?: 'User', $subject, $body);
+                self::sendViaSmtp($toEmail, $toName ?: 'User', $subject, $body);
+                return true;
             } catch (Throwable $fallbackError) {
-                error_log($logPrefix . ': SMTP failed: ' . $error->getMessage() . ' | Resend API failed: ' . $fallbackError->getMessage());
+                error_log($logPrefix . ': Resend API failed: ' . $error->getMessage() . ' | SMTP failed: ' . $fallbackError->getMessage());
+                return false;
             }
         }
+    }
+
+    private static function isCredentialFailure(Throwable $error): bool
+    {
+        return str_contains($error->getMessage(), 'HTTP 401') || str_contains($error->getMessage(), 'HTTP 403');
+    }
+
+    private static function hasMailCredential(): bool
+    {
+        $credential = getenv('MAIL_PASSWORD') ?: getenv('RESEND_API_KEY') ?: '';
+
+        return is_string($credential) && trim($credential) !== '';
     }
 
     private static function sendViaSmtp(string $toEmail, string $toName, string $subject, string $body): void
@@ -144,7 +169,6 @@ final class EmailHelper
             $response = curl_exec($curl);
             $status = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
             $error = curl_error($curl);
-            curl_close($curl);
 
             if ($response === false || $status < 200 || $status >= 300) {
                 throw new RuntimeException('HTTP ' . $status . ' ' . ($error ?: (string) $response));

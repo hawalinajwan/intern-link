@@ -79,6 +79,12 @@ final class LowonganController
     {
         $user = (new AuthMiddleware($this->db))->requireAuth('hrd');
         $payload = $this->jsonBody();
+
+        if (!$this->hasCompanyName((int) $user['id'])) {
+            $this->json(['message' => 'Lengkapi nama perusahaan sebelum membuat lowongan.'], 422);
+            return;
+        }
+
         $this->validateRequired($payload);
 
         $statement = $this->db->prepare(
@@ -243,6 +249,15 @@ final class LowonganController
         $statement->execute([$id, $userId]);
 
         return (bool) $statement->fetch();
+    }
+
+    private function hasCompanyName(int $userId): bool
+    {
+        $statement = $this->db->prepare('SELECT nama_perusahaan FROM profil_perusahaan WHERE user_id = ? LIMIT 1');
+        $statement->execute([$userId]);
+        $profile = $statement->fetch();
+
+        return $profile !== false && trim((string) ($profile['nama_perusahaan'] ?? '')) !== '';
     }
 
     private function publicRow(array $row): array

@@ -2,7 +2,7 @@
 
 import axios from 'axios';
 import Link from 'next/link';
-import { FormEvent, ReactNode, useEffect, useMemo, useState } from 'react';
+import { FormEvent, ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { getRole, isLoggedIn } from '@/lib/auth';
@@ -36,6 +36,17 @@ type LowonganItem = {
 
 type LowonganResponse = {
   data: LowonganItem[];
+};
+
+type CompanyProfileResponse = {
+  success: boolean;
+  data: {
+    user_id: number;
+    nama_perusahaan: string | null;
+    industri: string | null;
+    website: string | null;
+    logo_url: string | null;
+  };
 };
 
 type FormState = {
@@ -87,15 +98,10 @@ export default function HRDLowonganPage() {
   const [formError, setFormError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [busyId, setBusyId] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (!isLoggedIn() || getRole() !== 'hrd') {
-      router.replace('/auth/login');
-      return;
-    }
-
-    void fetchLowongan();
-  }, [router]);
+  const [companyName, setCompanyName] = useState('');
+  const [companyNameDraft, setCompanyNameDraft] = useState('');
+  const [companyError, setCompanyError] = useState('');
+  const [isCompanySaving, setIsCompanySaving] = useState(false);
 
   useEffect(() => {
     if (!toast) return;
@@ -107,12 +113,30 @@ export default function HRDLowonganPage() {
     () => items.filter((item) => item.status === 'aktif').length,
     [items]
   );
+  const hasCompanyName = companyName.trim() !== '';
 
-  async function fetchLowongan() {
+  const fetchCompanyProfile = useCallback(async () => {
+    setCompanyError('');
+
+    try {
+      const response = await api.get<CompanyProfileResponse>('/hrd/profil');
+      const name = response.data.data.nama_perusahaan || '';
+      setCompanyName(name);
+      setCompanyNameDraft(name);
+    } catch (error) {
+      const backendMessage = axios.isAxiosError(error)
+        ? error.response?.data?.message || error.response?.data?.error
+        : null;
+      setCompanyError(typeof backendMessage === 'string' ? backendMessage : 'Gagal memuat profil perusahaan.');
+    }
+  }, []);
+
+  const fetchLowongan = useCallback(async () => {
     setIsLoading(true);
     setErrorMessage('');
 
     try {
+      await fetchCompanyProfile();
       const response = await api.get<LowonganResponse>('/hrd/lowongan');
       setItems(response.data.data);
     } catch (error) {
@@ -126,9 +150,23 @@ export default function HRDLowonganPage() {
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [fetchCompanyProfile]);
+
+  useEffect(() => {
+    if (!isLoggedIn() || getRole() !== 'hrd') {
+      router.replace('/auth/login');
+      return;
+    }
+
+    void fetchLowongan();
+  }, [fetchLowongan, router]);
 
   function openCreateModal() {
+    if (!hasCompanyName) {
+      setCompanyError('Isi nama perusahaan sebelum membuat lowongan.');
+      return;
+    }
+
     setEditingItem(null);
     setForm(DEFAULT_FORM);
     setFormError('');
@@ -163,6 +201,33 @@ export default function HRDLowonganPage() {
 
   function updateForm<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
+  }
+
+  async function saveCompanyName(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const nextName = companyNameDraft.trim();
+    if (!nextName) {
+      setCompanyError('Nama perusahaan wajib diisi.');
+      return;
+    }
+
+    setIsCompanySaving(true);
+    setCompanyError('');
+
+    try {
+      await api.put('/hrd/profil', { nama_perusahaan: nextName });
+      setCompanyName(nextName);
+      setCompanyNameDraft(nextName);
+      setToast('Nama perusahaan berhasil disimpan.');
+    } catch (error) {
+      const backendMessage = axios.isAxiosError(error)
+        ? error.response?.data?.message || error.response?.data?.error
+        : null;
+      setCompanyError(typeof backendMessage === 'string' ? backendMessage : 'Gagal menyimpan nama perusahaan.');
+    } finally {
+      setIsCompanySaving(false);
+    }
   }
 
   async function submitForm(event: FormEvent<HTMLFormElement>) {
@@ -281,11 +346,43 @@ export default function HRDLowonganPage() {
         <button
           type="button"
           onClick={openCreateModal}
-          className="inline-flex items-center justify-center rounded-md bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+          disabled={!hasCompanyName}
+          className="inline-flex items-center justify-center rounded-md bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
         >
           Buat Lowongan Baru
         </button>
       </div>
+
+      {!hasCompanyName ? (
+        <form onSubmit={saveCompanyName} className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+            <div className="flex-1">
+              <label htmlFor="nama_perusahaan" className="block text-sm font-semibold text-amber-950">
+                Nama perusahaan wajib diisi
+              </label>
+              <input
+                id="nama_perusahaan"
+                type="text"
+                value={companyNameDraft}
+                onChange={(event) => setCompanyNameDraft(event.target.value)}
+                placeholder="Contoh: PT Intern Link Indonesia"
+                className="mt-2 w-full rounded-md border border-amber-200 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-amber-500 focus:ring-2 focus:ring-amber-100"
+              />
+              <p className="mt-2 text-sm text-amber-800">
+                Nama ini akan tampil di lowongan, email kandidat, dan halaman lamaran.
+              </p>
+            </div>
+            <button
+              type="submit"
+              disabled={isCompanySaving}
+              className="inline-flex items-center justify-center rounded-md bg-amber-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isCompanySaving ? 'Menyimpan...' : 'Simpan Nama'}
+            </button>
+          </div>
+          {companyError ? <p className="mt-3 text-sm font-medium text-red-700">{companyError}</p> : null}
+        </form>
+      ) : null}
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <SummaryCard label="Total lowongan" value={String(items.length)} helpText="Seluruh lowongan yang pernah dibuat" />

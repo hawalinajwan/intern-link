@@ -176,8 +176,9 @@ final class LamaranController
             $this->closeChatRoom((string) $chatRoomId);
         }
 
+        $emailNotificationSent = null;
         if ($status !== $lamaran['status']) {
-            $this->sendStatusNotification($lamaranId, $status, $chatRoomId ? (string) $chatRoomId : null);
+            $emailNotificationSent = $this->sendStatusNotification($lamaranId, $status, $chatRoomId ? (string) $chatRoomId : null);
         }
 
         $this->json([
@@ -185,6 +186,7 @@ final class LamaranController
             'data' => [
                 'status' => $status,
                 'chat_room_id' => $chatRoomId,
+                'email_notification_sent' => $emailNotificationSent,
             ],
         ]);
     }
@@ -217,15 +219,15 @@ final class LamaranController
         return $missingFields;
     }
 
-    private function sendStatusNotification(int $lamaranId, string $newStatus, ?string $chatRoomId): void
+    private function sendStatusNotification(int $lamaranId, string $newStatus, ?string $chatRoomId): ?bool
     {
         if (!in_array($newStatus, ['dipanggil', 'diterima', 'ditolak'], true)) {
-            return;
+            return null;
         }
 
         $detail = $this->notificationDetail($lamaranId);
         if ($detail === null) {
-            return;
+            return false;
         }
 
         $email = (string) $detail['mahasiswa_email'];
@@ -234,16 +236,14 @@ final class LamaranController
         $company = (string) ($detail['nama_perusahaan'] ?: 'Perusahaan');
 
         if ($newStatus === 'dipanggil' && $chatRoomId !== null) {
-            EmailHelper::sendDipanggil($email, $name, $title, $company, $this->clientUrl() . '/mahasiswa/chat/' . rawurlencode($chatRoomId));
-            return;
+            return EmailHelper::sendDipanggil($email, $name, $title, $company, $this->clientUrl() . '/mahasiswa/chat/' . rawurlencode($chatRoomId));
         }
 
         if ($newStatus === 'diterima') {
-            EmailHelper::sendDiterima($email, $name, $title, $company);
-            return;
+            return EmailHelper::sendDiterima($email, $name, $title, $company);
         }
 
-        EmailHelper::sendDitolak($email, $name, $title, $company);
+        return EmailHelper::sendDitolak($email, $name, $title, $company);
     }
 
     private function notificationDetail(int $lamaranId): ?array
@@ -364,7 +364,6 @@ final class LamaranController
             curl_setopt($curl, CURLOPT_TIMEOUT, 3);
             curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
             @curl_exec($curl);
-            curl_close($curl);
             return;
         }
 
