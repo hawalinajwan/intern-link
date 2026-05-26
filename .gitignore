@@ -59,3 +59,18 @@ backend-node/.env
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local Mac launchers and Codex workspace metadata
+START_INTERN_LINK.command
+STOP_INTERN_LINK.command
+
+.codex
+
+# local agent instructions and private working notes
+AGENTS.md
+CLAUDE.md
+GEMINI.md
+MIGRATE_TO_MAC.md
+*-codex-prompts.md
+*agent*.md
+*AGENT*.md

@@ -51,4 +51,4 @@ MONGODB_URI=mongodb://127.0.0.1:27017/magang_chat
 PORT=3000
 ```
 
-See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for GitHub, Vercel, backend, and database setup.
+See [docs/WEB_DOCUMENTATION.md](docs/WEB_DOCUMENTATION.md) for full web documentation and [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for deployment setup.
