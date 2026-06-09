@@ -199,7 +199,6 @@ export default function MahasiswaProfilPage() {
 
     try {
       const response = await api.post<UploadResponse>('/mahasiswa/cv/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
         onUploadProgress: (event) => {
           if (!event.total) return;
           setUploadProgress(Math.round((event.loaded * 100) / event.total));
